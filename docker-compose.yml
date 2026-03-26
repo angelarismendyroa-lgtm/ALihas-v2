@@ -60,6 +60,7 @@ services:
       - BROWSER_REMOTE_TIMEOUT_MS=1500
       - BROWSER_REMOTE_HANDSHAKE_TIMEOUT_MS=3000
       - HOOKS_ENABLED=true
+      - HOOKS_TOKEN=${HOOKS_TOKEN}  # <-- Añade esta línea
 
     ports:
       - "8080:8080"
