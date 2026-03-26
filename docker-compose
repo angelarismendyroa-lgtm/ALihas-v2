@@ -1,129 +1,41 @@
-# ╔══════════════════════════════════════════════════════════════════════════════╗
-# ║  JOSEIAS — Asistente Principal                                             ║
-# ║  Oracle 12 GB RAM / 100 GB Disco · 24/7                                   ║
-# ║  Dominio: joseias.alianed.com                                              ║
-# ╠══════════════════════════════════════════════════════════════════════════════╣
-# ║  VARIABLES DE ENTORNO REQUERIDAS EN DOKPLOY:                               ║
-# ║                                                                             ║
-# ║  AUTH_USERNAME          → usuario del panel (ej: admin)                    ║
-# ║  AUTH_PASSWORD          → contraseña del panel                             ║
-# ║  OPENCLAW_GATEWAY_TOKEN → openssl rand -hex 32                             ║
-# ║  TELEGRAM_BOT_TOKEN     → BotFather → /newbot                              ║
-# ║                                                                             ║
-# ║  ── ELIGE UN LLM — solo pon la API key del que vayas a usar ──            ║
-# ║                                                                             ║
-# ║  OPCIÓN 1 · OpenRouter (recomendado — acceso a todos los modelos)          ║
-# ║    OPENROUTER_API_KEY   → openrouter.ai → Keys                             ║
-# ║    Modelo por defecto:  google/gemini-2.0-flash-001                        ║
-# ║                                                                             ║
-# ║  OPCIÓN 2 · Gemini directo                                                 ║
-# ║    GEMINI_API_KEY       → aistudio.google.com → API Keys                   ║
-# ║    Modelo por defecto:  gemini-2.0-flash                                   ║
-# ║                                                                             ║
-# ║  OPCIÓN 3 · NVIDIA (si vuelve a funcionar)                                 ║
-# ║    NVIDIA_API_KEY       → build.nvidia.com → API Keys                      ║
-# ║    Modelo por defecto:  nvidia/nemotron-3-super-120b-a12b                  ║
-# ║                                                                             ║
-# ║  OPCIÓN 4 · LM Studio local (mismo servidor Oracle)                        ║
-# ║    No requiere API key — solo asegúrate que LM Studio corra en el host     ║
-# ║    y exponga el puerto 1234                                                 ║
-# ║                                                                             ║
-# ║  4. Dominio en Dokploy:                                                     ║
-# ║     Domain: joseias.alianed.com  →  Port: 8080  →  HTTPS: ON              ║
-# ╚══════════════════════════════════════════════════════════════════════════════╝
+version: '3.8'
 
 services:
-
   openclaw:
     image: "coollabsio/openclaw:2026.2.6"
     restart: unless-stopped
-
     environment:
+      # ════════════════════════════════════════════════════════════════════
+      # 1. LA JAULA: CAPA DE SEGURIDAD NEMOCLAW (OPEN_SHELL)
+      # Este modelo NO interactúa con el usuario. Solo audita comandos.
+      # ════════════════════════════════════════════════════════════════════
+      - NEMOCLAW_SANDBOX_NAME=alianedos-core
+      - NEMOCLAW_NON_INTERACTIVE=1
+      - NEMOCLAW_POLICY_MODE=custom # Obliga a OpenShell a ser estricto
+      - NEMOCLAW_PROVIDER=nim
+      - NEMOCLAW_MODEL=nvidia/nemotron-4-340b-instruct # El alcaide
+      
+      # Credenciales exclusivas para el motor de seguridad de NemoClaw
+      - NVIDIA_API_KEY=${NVIDIA_API_KEY}
+      - OPENAI_API_KEY=${NVIDIA_API_KEY}
+      - OPENAI_BASE_URL=https://integrate.api.nvidia.com/v1
 
-      # ── ACCESO AL PANEL ──────────────────────────────────────────────────
+      # ════════════════════════════════════════════════════════════════════
+      # 2. LOS CEREBROS: AGENTES DE ALIANED OS (Joseias, Tony, PM, Spirit)
+      # Estas APIs alimentan el entorno para que configures los roles en la UI.
+      # ════════════════════════════════════════════════════════════════════
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - ZAI_API_KEY=${ZAI_API_KEY}
+      - MINIMAX_API_KEY=${MINIMAX_API_KEY}
+
+      # ════════════════════════════════════════════════════════════════════
+      # 3. SISTEMA Y RED
+      # ════════════════════════════════════════════════════════════════════
       - AUTH_USERNAME=${AUTH_USERNAME}
       - AUTH_PASSWORD=${AUTH_PASSWORD}
       - OPENCLAW_GATEWAY_TOKEN=${OPENCLAW_GATEWAY_TOKEN}
-
-      # ── IDENTIDAD DEL AGENTE ─────────────────────────────────────────────
-      - NEMOCLAW_SANDBOX_NAME=joseias-master
-      - NEMOCLAW_PROVIDER=cloud
-      - NEMOCLAW_NON_INTERACTIVE=1
-
-      # ════════════════════════════════════════════════════════════════════
-      # ██  SELECCIÓN DE LLM — DESCOMENTA UNA SOLA OPCIÓN               ██
-      # ════════════════════════════════════════════════════════════════════
-
-      # ── OPCIÓN 1: OPENROUTER (recomendado) ──────────────────────────────
-      # Modelos disponibles en: openrouter.ai/models
-      # Ejemplos de modelos que puedes poner en OPENCLAW_PRIMARY_MODEL:
-      #   google/gemini-2.0-flash-001          (rápido, barato)
-      #   anthropic/claude-sonnet-4-5          (muy capaz)
-      #   qwen/qwen-2.5-72b-instruct           (open source potente)
-      #   meta-llama/llama-3.3-70b-instruct    (open source)
-      #   mistralai/mistral-large-2411         (europeo, bueno para código)
-      - OPENAI_API_KEY=${OPENROUTER_API_KEY}
-      - OPENAI_BASE_URL=https://openrouter.ai/api/v1
-      - OPENCLAW_PRIMARY_MODEL=google/gemini-2.0-flash-001
-      - NEMOCLAW_MODEL=google/gemini-2.0-flash-001
-
-      # ── OPCIÓN 2: GEMINI DIRECTO ─────────────────────────────────────────
-      # Descomenta estas 4 líneas y comenta las 4 de arriba
-      # - OPENAI_API_KEY=${GEMINI_API_KEY}
-      # - OPENAI_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai
-      # - OPENCLAW_PRIMARY_MODEL=gemini-2.0-flash
-      # - NEMOCLAW_MODEL=gemini-2.0-flash
-
-      # ── OPCIÓN 3: NVIDIA (si vuelve a funcionar) ─────────────────────────
-      # - OPENAI_API_KEY=${NVIDIA_API_KEY}
-      # - OPENAI_BASE_URL=https://integrate.api.nvidia.com/v1
-      # - OPENCLAW_PRIMARY_MODEL=nvidia/nemotron-3-super-120b-a12b
-      # - NEMOCLAW_MODEL=nvidia/nemotron-3-super-120b-a12b
-
-      # ── OPCIÓN 4: LM STUDIO LOCAL (mismo servidor Oracle) ────────────────
-      # Primero instala LM Studio en el host y activa "Local Server"
-      # La URL usa host.docker.internal para salir al host desde el contenedor
-      # - OPENAI_API_KEY=lm-studio
-      # - OPENAI_BASE_URL=http://host.docker.internal:1234/v1
-      # - OPENCLAW_PRIMARY_MODEL=<nombre-del-modelo-cargado-en-lmstudio>
-      # - NEMOCLAW_MODEL=<nombre-del-modelo-cargado-en-lmstudio>
-
-      # ════════════════════════════════════════════════════════════════════
-
-      # ── TELEGRAM ─────────────────────────────────────────────────────────
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-
-      # ── OTRAS CLAVES (agrega las que necesites) ───────────────────────────
-      - ANTHROPIC_API_KEY=
-      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
-      - GEMINI_API_KEY=AIzaSyBkp67Plud_jau3ip536nqRgMBk5SehBL0
-      - NVIDIA_API_KEY=
-      - XAI_API_KEY=
-      - GROQ_API_KEY=
-      - MISTRAL_API_KEY=
-      - CEREBRAS_API_KEY=
-      - VENICE_API_KEY=
-      - MOONSHOT_API_KEY=
-      - KIMI_API_KEY=
-      - MINIMAX_API_KEY=
-      - ZAI_API_KEY=
-      - AI_GATEWAY_API_KEY=
-      - OPENCODE_API_KEY=
-      - SYNTHETIC_API_KEY=
-      - COPILOT_GITHUB_TOKEN=
-      - DEEPGRAM_API_KEY=
-      - DISCORD_BOT_TOKEN=
-      - SLACK_BOT_TOKEN=
-      - SLACK_APP_TOKEN=
-      - WHATSAPP_ENABLED=false
-      - AWS_ACCESS_KEY_ID=
-      - AWS_SECRET_ACCESS_KEY=
-      - AWS_SESSION_TOKEN=
-      - AWS_REGION=us-east-1
-      - BEDROCK_PROVIDER_FILTER=anthropic
-      - OLLAMA_BASE_URL=
-
-      # ── CONFIG INTERNA — NO MODIFICAR ────────────────────────────────────
       - PORT=8080
       - OPENCLAW_GATEWAY_PORT=18789
       - OPENCLAW_GATEWAY_BIND=loopback
@@ -135,27 +47,20 @@ services:
       - BROWSER_SNAPSHOT_MODE=efficient
       - BROWSER_REMOTE_TIMEOUT_MS=1500
       - BROWSER_REMOTE_HANDSHAKE_TIMEOUT_MS=3000
-      - HOOKS_ENABLED=false
-      - HOOKS_PATH=/hooks
-      - MOONSHOT_BASE_URL=https://api.moonshot.ai/v1
-      - KIMI_BASE_URL=https://api.moonshot.ai/anthropic
+      - HOOKS_ENABLED=true # Necesario para las políticas pre y post ejecución
 
     ports:
       - "8080:8080"
-
     volumes:
       - joseias-data:/data
-
     depends_on:
       browser:
         condition: service_healthy
-
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://127.0.0.1:8080/healthz"]
       interval: 10s
       timeout: 10s
       retries: 5
-
     deploy:
       resources:
         limits:
