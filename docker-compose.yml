@@ -4,19 +4,23 @@ services:
   openclaw:
     image: "coollabsio/openclaw:2026.2.6"
     restart: unless-stopped
+    networks:
+      - dokploy-net
+      - core-agentes-net
     environment:
       # ════════════════════════════════════════════════════════════════════
-      # 1. LA JAULA: CAPA DE SEGURIDAD NEMOCLAW (ESTRICTO NVIDIA)
+      # 1. LA JAULA: CAPA DE SEGURIDAD NEMOCLAW (OPEN_SHELL)
       # ════════════════════════════════════════════════════════════════════
       - NEMOCLAW_SANDBOX_NAME=alianedos-core
       - NEMOCLAW_NON_INTERACTIVE=1
       - NEMOCLAW_POLICY_MODE=custom
       - NEMOCLAW_PROVIDER=nim
-      - NEMOCLAW_MODEL=nvidia/nemotron-4-340b-instruct
+      # Parametrizado para evitar obsolescencia del catálogo de NVIDIA
+      - NEMOCLAW_MODEL=${NEMOCLAW_SECURITY_MODEL}
       - NVIDIA_API_KEY=${NVIDIA_API_KEY}
 
       # ════════════════════════════════════════════════════════════════════
-      # 2. EL CEREBRO ACTIVO: ENRUTAMIENTO DINÁMICO
+      # 2. EL CEREBRO ACTIVO: ENRUTAMIENTO DINÁMICO (JOSEIAS)
       # ════════════════════════════════════════════════════════════════════
       - OPENAI_API_KEY=${ACTIVE_API_KEY}
       - OPENAI_BASE_URL=${ACTIVE_BASE_URL}
@@ -39,7 +43,7 @@ services:
       - CLOUDFLARE_ACCOUNT_ID=${CLOUDFLARE_ACCOUNT_ID}
 
       # ════════════════════════════════════════════════════════════════════
-      # 4. SISTEMA Y RED
+      # 4. SISTEMA Y CONFIGURACIÓN BASE
       # ════════════════════════════════════════════════════════════════════
       - AUTH_USERNAME=${AUTH_USERNAME}
       - AUTH_PASSWORD=${AUTH_PASSWORD}
@@ -65,11 +69,6 @@ services:
     depends_on:
       browser:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-sf", "http://127.0.0.1:8080/healthz"]
-      interval: 10s
-      timeout: 10s
-      retries: 5
     deploy:
       resources:
         limits:
@@ -80,6 +79,8 @@ services:
   browser:
     image: "coollabsio/openclaw-browser:latest"
     restart: unless-stopped
+    networks:
+      - core-agentes-net
     environment:
       - PUID=1000
       - PGID=1000
@@ -99,6 +100,15 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+# ════════════════════════════════════════════════════════════════════
+# DECLARACIÓN DE REDES EXTERNAS (Aislamiento SRE)
+# ════════════════════════════════════════════════════════════════════
+networks:
+  dokploy-net:
+    external: true
+  core-agentes-net:
+    external: true
 
 volumes:
   joseias-data:
