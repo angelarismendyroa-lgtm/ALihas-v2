@@ -1,14 +1,15 @@
 services:
   openclaw:
-    image: "coollabsio/openclaw:2026.2.6"
+    image: coollabsio/openclaw:2026.2.6
     restart: unless-stopped
     networks:
       - dokploy-network
       - core-agentes-net
+      - gateway-net
+      - vector-net
     environment:
       # ════════════════════════════════════════════════════════════════════
       # 1. LA JAULA: CAPA DE SEGURIDAD NEMOCLAW (OPEN_SHELL)
-      # Motor: NVIDIA NIM Free — Modelo de guardia de seguridad
       # ════════════════════════════════════════════════════════════════════
       - NEMOCLAW_SANDBOX_NAME=alianedos-core
       - NEMOCLAW_NON_INTERACTIVE=1
@@ -19,7 +20,6 @@ services:
 
       # ════════════════════════════════════════════════════════════════════
       # 2. EL CEREBRO ACTIVO: ENRUTAMIENTO DINÁMICO (JOSEIAS)
-      # Motor: NVIDIA NIM Free — Modelo operativo principal
       # ════════════════════════════════════════════════════════════════════
       - OPENAI_API_KEY=${ACTIVE_API_KEY}
       - OPENAI_BASE_URL=${ACTIVE_BASE_URL}
@@ -27,8 +27,6 @@ services:
 
       # ════════════════════════════════════════════════════════════════════
       # 3. BÓVEDA DE APIS MULTI-PROVEEDOR
-      # OpenRouter: Motor de agentes especializados (auditor, marketing)
-      # Resto: Reserva y escalamiento bajo demanda
       # ════════════════════════════════════════════════════════════════════
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
@@ -50,12 +48,12 @@ services:
       - AUTH_PASSWORD=${AUTH_PASSWORD}
       - OPENCLAW_GATEWAY_TOKEN=${OPENCLAW_GATEWAY_TOKEN}
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-      - PORT=8080
+      - PORT=8082
       - OPENCLAW_GATEWAY_PORT=18789
       - OPENCLAW_GATEWAY_BIND=loopback
       - OPENCLAW_STATE_DIR=/data/.openclaw
       - OPENCLAW_WORKSPACE_DIR=/data/workspace
-      - BROWSER_CDP_URL=http://browser:9223
+      - BROWSER_CDP_URL=http://browser:9222
       - BROWSER_DEFAULT_PROFILE=openclaw
       - BROWSER_EVALUATE_ENABLED=true
       - BROWSER_SNAPSHOT_MODE=efficient
@@ -65,12 +63,10 @@ services:
       - HOOKS_TOKEN=${HOOKS_TOKEN}
 
     ports:
-      - "8080:8080"
+      - "8082:8082"
     volumes:
       - joseias-data:/data
-      # Montaje estricto de la política de sandboxing NemoClaw
       - ./policies:/data/.openclaw/policies:ro
-      # Documentos de identidad del agente (system prompt, config, safety rules)
       - ./identity:/data/workspace/identity:ro
     depends_on:
       browser:
@@ -81,9 +77,25 @@ services:
           memory: 8g
         reservations:
           memory: 1g
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=dokploy-network
+      # HTTP → redirect a HTTPS
+      - traefik.http.routers.alihas-web.rule=Host(`alihas.alianed.com`)
+      - traefik.http.routers.alihas-web.entrypoints=web
+      - traefik.http.routers.alihas-web.middlewares=redirect-to-https@file
+      - traefik.http.routers.alihas-web.service=alihas-web
+      - traefik.http.services.alihas-web.loadbalancer.server.port=8082
+      # HTTPS
+      - traefik.http.routers.alihas-websecure.rule=Host(`alihas.alianed.com`)
+      - traefik.http.routers.alihas-websecure.entrypoints=websecure
+      - traefik.http.routers.alihas-websecure.tls.certresolver=letsencrypt
+      - traefik.http.routers.alihas-websecure.service=alihas-websecure
+      - traefik.http.services.alihas-websecure.loadbalancer.server.port=8082
 
   browser:
-    image: "coollabsio/openclaw-browser:latest"
+    image: coollabsio/openclaw-browser:latest
+    hostname: browser
     restart: unless-stopped
     networks:
       - core-agentes-net
@@ -108,14 +120,22 @@ services:
       retries: 10
 
 # ════════════════════════════════════════════════════════════════════
-# DECLARACIÓN DE REDES (Compatible Dokploy + Codespace)
-# En Dokploy: existen como externas.
-# En Codespace: se crean vía .devcontainer/post-create.sh
+# 7 REDES TRONCALES — ALiANeD Core Architecture
 # ════════════════════════════════════════════════════════════════════
 networks:
-  dokploy-network:
+  dokploy-network:       # 1. Infraestructura / Traefik
     external: true
-  core-agentes-net:
+  core-agentes-net:      # 2. Cerebros corporativos (OpenClaw, Spirit, Joseias, Tony)
+    external: true
+  mayordomia-net:        # 3. Agentes de voz
+    external: true
+  vector-net:            # 4. Memoria semántica (Qdrant, embeddings)
+    external: true
+  humandata-net:         # 5. Datos humanos / CRM / n8n
+    external: true
+  gateway-net:           # 6. Canales externos (Telegram, webhooks, APIs)
+    external: true
+  observability-net:     # 7. Logs, métricas, trazabilidad
     external: true
 
 volumes:
