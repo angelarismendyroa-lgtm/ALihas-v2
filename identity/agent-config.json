@@ -1,0 +1,83 @@
+{
+  "agent_name": "ALihas",
+  "alias": "Joseias",
+  "version": "2.0.0",
+  "company": {
+    "name": "AlianeD",
+    "ceo": "Arismendy",
+    "region": "Santo Domingo, República Dominicana",
+    "timezone": "America/Santo_Domingo"
+  },
+  "security": {
+    "framework": "NemoClaw",
+    "policy_mode": "strict",
+    "sandbox_name": "alianedos-core",
+    "policy_file": "policies/openclaw-sandbox.yaml"
+  },
+  "inference_strategy": {
+    "_comment": "NVIDIA NIM Free como backbone exclusivo. OpenRouter para agentes especializados.",
+    "primary_llm": {
+      "role": "operative",
+      "provider": "nvidia-nim",
+      "model": "moonshotai/kimi-k2-thinking",
+      "endpoint": "https://integrate.api.nvidia.com/v1",
+      "cost": "free",
+      "context_window": "256K tokens",
+      "architecture": "MoE — 1T params total, 32B activated",
+      "agentic_capabilities": {
+        "interleaved_reasoning": true,
+        "max_sequential_tool_calls": "200-300",
+        "int4_quantization": true
+      },
+      "description": "Motor agéntico principal — razonamiento interleaved con tool use, 256K contexto, optimizado para orquestación autónoma"
+    },
+    "safety_llm": {
+      "role": "security-guard",
+      "provider": "nvidia-nim",
+      "model": "nvidia/llama-3.1-nemotron-safety-guard-8b-v3",
+      "endpoint": "https://integrate.api.nvidia.com/v1",
+      "cost": "free",
+      "description": "Filtro de seguridad de contenido nativo NVIDIA — evalúa inputs/outputs antes de ejecutar"
+    },
+    "agent_llm": {
+      "role": "specialized-agents",
+      "provider": "openrouter",
+      "models": ["variable — según agente y tarea"],
+      "endpoint": "https://openrouter.ai/api/v1",
+      "cost": "pay-per-use",
+      "description": "Motor para agentes especializados dentro del ecosistema AlianeD",
+      "use_cases": [
+        "Agente Auditor",
+        "Agente de Marketing",
+        "Agente Analista de Datos",
+        "Sub-agentes de desarrollo"
+      ]
+    },
+    "fallback_multimodal": {
+      "role": "vision-tasks",
+      "provider": "nvidia-nim",
+      "model": "qwen/qwen3.5-397b",
+      "endpoint": "https://integrate.api.nvidia.com/v1",
+      "cost": "free",
+      "description": "Reserva multimodal para tareas que requieran visión (UI, imágenes, dashboards)"
+    }
+  },
+  "capabilities": [
+    "project-management",
+    "code-generation",
+    "web-automation",
+    "document-analysis",
+    "multi-provider-routing",
+    "telegram-integration",
+    "browser-automation",
+    "agentic-tool-orchestration",
+    "interleaved-reasoning"
+  ],
+  "deployment": {
+    "v1_production": "Dokploy (en servicio — cuenta producción)",
+    "v2_testing": "GitHub Codespace (esta instancia — cuenta desarrollo)",
+    "v2_target": "Dokploy (después de validación en Codespace)",
+    "repo_dev": "angelarismendyroa-lgtm/ALihas",
+    "repo_prod": "Pendiente — migración tras validación"
+  }
+}

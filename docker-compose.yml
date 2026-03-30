@@ -8,16 +8,18 @@ services:
     environment:
       # ════════════════════════════════════════════════════════════════════
       # 1. LA JAULA: CAPA DE SEGURIDAD NEMOCLAW (OPEN_SHELL)
+      # Motor: NVIDIA NIM Free — Modelo de guardia de seguridad
       # ════════════════════════════════════════════════════════════════════
       - NEMOCLAW_SANDBOX_NAME=alianedos-core
       - NEMOCLAW_NON_INTERACTIVE=1
-      - NEMOCLAW_POLICY_MODE=strict # MODIFIED: Changed from custom to strict
+      - NEMOCLAW_POLICY_MODE=strict
       - NEMOCLAW_PROVIDER=nim
       - NEMOCLAW_MODEL=${NEMOCLAW_SECURITY_MODEL}
       - NVIDIA_API_KEY=${NVIDIA_API_KEY}
 
       # ════════════════════════════════════════════════════════════════════
       # 2. EL CEREBRO ACTIVO: ENRUTAMIENTO DINÁMICO (JOSEIAS)
+      # Motor: NVIDIA NIM Free — Modelo operativo principal
       # ════════════════════════════════════════════════════════════════════
       - OPENAI_API_KEY=${ACTIVE_API_KEY}
       - OPENAI_BASE_URL=${ACTIVE_BASE_URL}
@@ -25,6 +27,8 @@ services:
 
       # ════════════════════════════════════════════════════════════════════
       # 3. BÓVEDA DE APIS MULTI-PROVEEDOR
+      # OpenRouter: Motor de agentes especializados (auditor, marketing)
+      # Resto: Reserva y escalamiento bajo demanda
       # ════════════════════════════════════════════════════════════════════
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
@@ -64,8 +68,10 @@ services:
       - "8080:8080"
     volumes:
       - joseias-data:/data
-      # ENRICHED: Montaje estricto de la política de sandboxing local a interna
+      # Montaje estricto de la política de sandboxing NemoClaw
       - ./policies:/data/.openclaw/policies:ro
+      # Documentos de identidad del agente (system prompt, config, safety rules)
+      - ./identity:/data/workspace/identity:ro
     depends_on:
       browser:
         condition: service_healthy
@@ -102,7 +108,9 @@ services:
       retries: 10
 
 # ════════════════════════════════════════════════════════════════════
-# DECLARACIÓN DE REDES EXTERNAS (Aislamiento SRE)
+# DECLARACIÓN DE REDES (Compatible Dokploy + Codespace)
+# En Dokploy: existen como externas.
+# En Codespace: se crean vía .devcontainer/post-create.sh
 # ════════════════════════════════════════════════════════════════════
 networks:
   dokploy-network:
