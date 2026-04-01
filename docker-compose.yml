@@ -1,3 +1,4 @@
+version: '3.8'
 services:
   openclaw:
     image: coollabsio/openclaw:2026.2.6
@@ -48,9 +49,9 @@ services:
       - AUTH_PASSWORD=${AUTH_PASSWORD}
       - OPENCLAW_GATEWAY_TOKEN=${OPENCLAW_GATEWAY_TOKEN}
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - ENGRAM_URL=http://aliha-neurogestor:7437
       - PORT=8082
       - OPENCLAW_GATEWAY_PORT=18789
-      - OPENCLAW_GATEWAY_BIND=loopback
       - OPENCLAW_STATE_DIR=/data/.openclaw
       - OPENCLAW_WORKSPACE_DIR=/data/workspace
       - BROWSER_CDP_URL=http://browser:9222
@@ -125,17 +126,17 @@ services:
 networks:
   dokploy-network:       # 1. Infraestructura / Traefik
     external: true
-  core-agentes-net:      # 2. Cerebros corporativos (OpenClaw, Spirit, Joseias, Tony)
+  core-agentes-net:      # 2. Cerebros corporativos (OpenClaw, Spirit, Joseias)
     external: true
   mayordomia-net:        # 3. Agentes de voz
     external: true
   vector-net:            # 4. Memoria semántica (Qdrant, embeddings)
     external: true
-  humandata-net:         # 5. Datos humanos / CRM / n8n
+  humandata-net:         # 5. Datos humanos / CRM / Asistente Telegram
     external: true
-  gateway-net:           # 6. Canales externos (Telegram, webhooks, APIs)
+  gateway-net:           # 6. Canales externos (webhooks, APIs)
     external: true
-  observability-net:     # 7. Logs, métricas, trazabilidad
+  observability-net:     # 7. Sistema Inmunológico (NemoClaw Dynamic Policy)
     external: true
 
 volumes:
