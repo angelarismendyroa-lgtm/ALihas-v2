@@ -1,7 +1,7 @@
 version: '3.8'
 services:
   openclaw:
-    image: coollabsio/openclaw:2026.2.6
+    image: coollabsio/openclaw:latest
     restart: unless-stopped
     networks:
       - dokploy-network
